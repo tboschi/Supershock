@@ -1,24 +1,16 @@
 #include "Tools.h"
 
 //Kinematic factors
-double Kine::ShrockFactor(double M_Meson, double M_Lepton, double M_Sterile) //Correct scaling of flux
+double Kine::ShrockFactor(double M_Meson, double M_Lepton, double M_Sterile, int H) //Correct scaling of flux, H = +1 spin up, H = -1 spin down, H =  0 both
 {
-	double dM_a = pow(M_Lepton/M_Meson, 2.0);
-	double dM_i = pow(M_Sterile/M_Meson, 2.0);	
+	double Xa = pow(M_Lepton/M_Meson, 2.0);
+	double Xn = pow(M_Sterile/M_Meson, 2.0);	
 
 	if (M_Meson >= M_Lepton + M_Sterile)
-		return ShrockRho(dM_a, dM_i)/(dM_a * pow(1-dM_a, 2.0));
+		return sqrt(Lambda(1, Xa, Xn)) * 
+		       ( Xa + Xn - pow(Xa - Xn, 2.0) + H*((Xa-Xn)*sqrt(Lambda(1, Xa, Xn))) ) / 
+		       ((H == 0 ? 1.0 : 2.0) * Xa * pow(1-Xa, 2.0));
 	else return 0;
-}
-
-double Kine::ShrockRho(double X, double Y)
-{
-	return ShrockFM(X, Y)*sqrt(Lambda(1, X, Y));
-}
-
-double Kine::ShrockFM(double X, double Y)
-{
-	return X+Y - (X-Y)*(X-Y);
 }
 
 double Kine::Lambda(double X, double Y, double Z)

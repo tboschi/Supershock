@@ -54,6 +54,7 @@ int main(int argc, char** argv)
 
 	double Elec = Const::fMElectron;
 	double Muon = Const::fMMuon;
+	double Tau = Const::fMTau;
 	double Pion = Const::fMPion;
 	double Pion0 = Const::fMPion0;
 	double Kaon = Const::fMKaon;
@@ -62,7 +63,7 @@ int main(int argc, char** argv)
 	//To have multiple output, handled by usage
 	std::ostream &Out = (OutFile.is_open()) ? OutFile : std::cout;
 
-	Out << "#MS\tElPi\tElKa\tElCh\tMuPi\tMuKa\tMuCh" << std::endl;
+	Out << "#MS\tElPi\tElKa\tElCh\tMuPi\tMuKa\tMuCh\tTuCh" << std::endl;
 	for (double t = 0; t < 2.0; t += 0.001)
 	{
 		Out << t << "\t";
@@ -72,6 +73,7 @@ int main(int argc, char** argv)
 		Out << Kine::ShrockFactor(Pion, Muon, t) << "\t";
 		Out << Kine::ShrockFactor(Kaon, Muon, t) << "\t";
 		Out << Kine::ShrockFactor(Charm, Muon, t) << "\t";
+		Out << Kine::ShrockFactor(Charm, Tau, t) << "\t";
 		Out << std::endl;
 	}
 	//Create object from classes

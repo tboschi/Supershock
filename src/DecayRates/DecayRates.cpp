@@ -1,6 +1,6 @@
 #include "DecayRates.h"
 
-Decay::Decay(double MSterile, double Ue, double Um, double Ut)	: //Decay rates calculator
+Decay::Decay(double MSterile, double Ue, double Um, double Ut, int H, bool Maj)	: //Decay rates calculator
 	M_Neutrino(0.0),
 	M_Photon(0.0),
 	M_Electron(Const::fMElectron),
@@ -28,6 +28,8 @@ Decay::Decay(double MSterile, double Ue, double Um, double Ut)	: //Decay rates c
 	SetUe(Ue);
 	SetUm(Um);
 	SetUt(Ut);
+	SetHel(H);
+	SetFermion(Maj);
 
 	MapInit();
 	SetEnhancement();
@@ -189,7 +191,7 @@ double Decay::Gamma(std::string Channel, double B)
 	}
 
 	//SetEnhancement();
-	return Result;
+	return (2*GetFermion()+1)*Result;
 }
 
 double Decay::Other(std::string Channel, double A)
@@ -474,6 +476,12 @@ int Decay::PhaseSpace(std::string Channel, double &Weight)	//Return number of pr
 			PdgCode[1] = 211;
 			Products = 2 * Event->SetDecay(*N_rest, 2, Mass);
 			Weight = Event->Generate();
+
+			if (GetHel() != 0)
+			{
+				TheSpace->SetEnergyX(Event->GetDecay(0)->E());
+				Weight = TheSpace->dGammadT(Event->GetDecay(0)->Theta(), GetHel())/TheSpace->MaxGammaT(GetHel());
+			}
 			break;
 
 		case _nMUMU:
@@ -498,6 +506,12 @@ int Decay::PhaseSpace(std::string Channel, double &Weight)	//Return number of pr
 			PdgCode[1] = 211;
 			Products = 2 * Event->SetDecay(*N_rest, 2, Mass);
 			Weight = Event->Generate();
+			
+			if (GetHel() != 0)
+			{
+				TheSpace->SetEnergyX(Event->GetDecay(0)->E());
+				Weight = TheSpace->dGammadT(Event->GetDecay(0)->Theta(), GetHel())/TheSpace->MaxGammaT(GetHel());
+			}
 			break;
 
 		case _EKA:
@@ -696,7 +710,7 @@ double Decay::nEMU()	//Antiparticle is Elec
 	if (fnEMU < 0 || IsChanged())
 		fnEMU = NeutrinoLeptonAB(M_Electron, M_Muon);
 
-	return mapEnhance["nEMU"] * fnEMU * Ue*Ue;
+	return LNV() * mapEnhance["nEMU"] * fnEMU * Ue*Ue;
 }
 
 double Decay::nMUE()	//Anti is Muon
@@ -704,7 +718,7 @@ double Decay::nMUE()	//Anti is Muon
 	if (fnMUE < 0 || IsChanged())
 		fnMUE = NeutrinoLeptonAB(M_Muon, M_Electron);
 
-	return mapEnhance["nMUE"] * fnMUE * Um*Um;
+	return LNV() * mapEnhance["nMUE"] * fnMUE * Um*Um;
 }
 
 //M_Sterile > 2 M_Muon
@@ -722,7 +736,7 @@ double Decay::nET()	//Antiparticle is Elec
 	if (fnET < 0 || IsChanged())
 		fnET = NeutrinoLeptonAB(M_Electron, M_Tau);
 
-	return mapEnhance["nET"] * fnET * Ue*Ue;
+	return LNV() * mapEnhance["nET"] * fnET * Ue*Ue;
 }
 
 double Decay::nTE()	//Anti is Tau
@@ -730,7 +744,7 @@ double Decay::nTE()	//Anti is Tau
 	if (fnTE < 0 || IsChanged())
 		fnTE = NeutrinoLeptonAB(M_Tau, M_Electron);
 
-	return mapEnhance["nTE"] * fnTE * Ut*Ut;
+	return LNV() * mapEnhance["nTE"] * fnTE * Ut*Ut;
 }
 
 //M_Sterile > M_Tau + M_Muon
@@ -739,7 +753,7 @@ double Decay::nMUT()	//Antiparticle is Muon
 	if (fnMUT < 0 || IsChanged())
 		fnMUT = NeutrinoLeptonAB(M_Muon, M_Tau);
 
-	return mapEnhance["nMUT"] * fnMUT * Um*Um;
+	return LNV() * mapEnhance["nMUT"] * fnMUT * Um*Um;
 }
 
 double Decay::nTMU()	//Anti is Tau
@@ -747,7 +761,7 @@ double Decay::nTMU()	//Anti is Tau
 	if (fnTMU < 0 || IsChanged())
 		fnTMU = NeutrinoLeptonAB(M_Tau, M_Muon);
 
-	return mapEnhance["nTMU"] * fnTMU * Ut*Ut;
+	return LNV() * mapEnhance["nTMU"] * fnTMU * Ut*Ut;
 }
 
 //M_Sterile > M_Pion0
@@ -765,7 +779,7 @@ double Decay::EPI()
 	if (fEPI < 0 || IsChanged())
 		fEPI = LeptonPseudoMeson(M_Electron, M_Pion, Const::fU_ud, Const::fDPion2);
 	
-	return mapEnhance["EPI"] * fEPI * Ue*Ue;
+	return LNV() * mapEnhance["EPI"] * fEPI * Ue*Ue;
 }
 
 //M_Sterile > M_Pion + M_Muon
@@ -774,7 +788,7 @@ double Decay::MUPI()
 	if (fMUPI < 0 || IsChanged())
 		fMUPI = LeptonPseudoMeson(M_Muon, M_Pion, Const::fU_ud, Const::fDPion2);
 	
-	return mapEnhance["MUPI"] * fMUPI * Um*Um;
+	return LNV() * mapEnhance["MUPI"] * fMUPI * Um*Um;
 }
 
 //M_Sterile > M_Tau + M_Pion
@@ -783,7 +797,7 @@ double Decay::TPI()
 	if (fTPI < 0 || IsChanged())
 		fTPI = LeptonPseudoMeson(M_Tau, M_Pion, Const::fU_ud, Const::fDPion2);
 	
-	return mapEnhance["TPI"] * fTPI * Ut*Ut;
+	return LNV() * mapEnhance["TPI"] * fTPI * Ut*Ut;
 }
 
 //M_Sterile > M_Kaon + M_Electron
@@ -792,7 +806,7 @@ double Decay::EKA()
 	if (fEKA < 0 || IsChanged())
 		fEKA = LeptonPseudoMeson(M_Electron, M_Kaon, Const::fU_us, Const::fDKaon2);
 
-	return mapEnhance["EKA"] * fEKA * Ue*Ue;
+	return LNV() * mapEnhance["EKA"] * fEKA * Ue*Ue;
 }
 
 //M_Sterile > M_Kaon + M_Muon
@@ -801,7 +815,7 @@ double Decay::MUKA()
 	if (fMUKA < 0 || IsChanged())
 		fMUKA = LeptonPseudoMeson(M_Muon, M_Kaon, Const::fU_us, Const::fDKaon2);
 
-	return mapEnhance["MUKA"] * fMUKA * Um*Um;
+	return LNV() * mapEnhance["MUKA"] * fMUKA * Um*Um;
 }
 
 //M_Sterile > M_Rho
@@ -819,7 +833,7 @@ double Decay::ERHO()
 	if (fERHO < 0 || IsChanged())
 		fERHO = LeptonVectorMeson(M_Electron, M_Rho, Const::fU_ud, Const::fDRho2, Const::fVLight);	//check
 
-	return mapEnhance["ERHO"] * fERHO * Ue*Ue;
+	return LNV() * mapEnhance["ERHO"] * fERHO * Ue*Ue;
 }
 
 //M_Sterile > M_Rho + M_Muon 
@@ -828,7 +842,7 @@ double Decay::MURHO()
 	if (fMURHO < 0 || IsChanged())
 		fMURHO = LeptonVectorMeson(M_Muon, M_Rho, Const::fU_ud, Const::fDRho2, Const::fVLight);	//check
 
-	return mapEnhance["MURHO"] * fMURHO * Um*Um;
+	return LNV() * mapEnhance["MURHO"] * fMURHO * Um*Um;
 }
 
 //M_Sterile > M_Kaon* + M_Electron 
@@ -837,7 +851,7 @@ double Decay::EKAx()
 	if (fEKAx < 0 || IsChanged())
 		fEKAx = LeptonVectorMeson(M_Electron, M_Kaonx, Const::fU_us, Const::fDKaonx2, Const::fVStrange);	//check
 
-	return mapEnhance["EKAx"] * fEKAx * Ue*Ue;
+	return LNV() * mapEnhance["EKAx"] * fEKAx * Ue*Ue;
 }
 
 //M_Sterile > M_Kaon0* 
@@ -855,7 +869,7 @@ double Decay::MUKAx()
 	if (fMUKAx < 0 || IsChanged())
 		fMUKAx = LeptonVectorMeson(M_Muon, M_Kaonx, Const::fU_us, Const::fDKaonx2, Const::fVStrange);	//check
 
-	return mapEnhance["MUKAx"] * fMUKAx * Um*Um;
+	return LNV() * mapEnhance["MUKAx"] * fMUKAx * Um*Um;
 }
 
 //M_Sterile > M_Eta
@@ -900,7 +914,7 @@ double Decay::ECHARM()
 	if (fECHARM < 0 || IsChanged())
 		fECHARM = LeptonPseudoMeson(M_Electron, M_Charm, Const::fU_cd, Const::fDCharm2);
 
-	return mapEnhance["ECHARM"] * fECHARM * Ue*Ue;
+	return LNV() * mapEnhance["ECHARM"] * fECHARM * Ue*Ue;
 }
 
 /////////////////
@@ -913,7 +927,7 @@ double Decay::LeptonPseudoMeson(double M_Lepton, double M_Meson, double vCKM, do
 		double dML2 = M_Lepton*M_Lepton/M_Sterile/M_Sterile;
 		double dMM2 = M_Meson*M_Meson/M_Sterile/M_Sterile;
 
-		return 2.0 * Const::fGF2 * pow(M_Sterile, 3) *
+		return Const::fGF2 * pow(M_Sterile, 3) *
 		       pow(vCKM, 2.0) * fDecay2 * Kine::I1_xy(dML2, dMM2) /
 		       (16.0 * Const::fPi);
 	}
@@ -941,7 +955,7 @@ double Decay::LeptonVectorMeson(double M_Lepton, double M_Meson, double vCKM, do
 		double dMM2 = M_Meson*M_Meson/M_Sterile/M_Sterile;
 		fVector *= fVector;
 
-		return 2.0 * Const::fGF2 * pow(M_Sterile, 3) *
+		return Const::fGF2 * pow(M_Sterile, 3) *
 		       pow(vCKM, 2.0) * fDecay2 * fVector * Kine::I2_xy(dML2, dMM2) /
 		       (16.0 * Const::fPi);
 	}
@@ -995,7 +1009,7 @@ double Decay::NeutrinoLeptonAB(double M_LeptonA, double M_LeptonB)	//it is doubl
 		double dMB = M_LeptonB / M_Sterile;
 		double dMn = M_Neutrino / M_Sterile;
 
-		return 2.0 * Const::fGF2 * pow(M_Sterile, 5) * Kine::I1_xyz(dMA, dMn, dMB) /
+		return Const::fGF2 * pow(M_Sterile, 5) * Kine::I1_xyz(dMA, dMn, dMB) /
 			(192.0 * Const::fPi3);
 	}
 	else return 0.0;
@@ -1109,10 +1123,11 @@ void Decay::SetNvec(TLorentzVector &X)
 	N_rest->SetPxPyPzE(0, 0, 0, N_vec->M());
 }
 
-void Decay::SetMass(double X)
+void Decay::SetMass(double X, int H)
 {
 	M_Sterile = X;
 	TheSpace->SetSterileMass(X);
+	SetHel(H);
 }
 
 void Decay::SetUe(double X)
@@ -1131,4 +1146,29 @@ void Decay::SetUt(double X)
 {
 	Ut = X;
 	TheSpace->SetUt(X);
+}
+
+void Decay::SetFermion(bool F)
+{
+	bFermion = F;
+}
+
+bool Decay::GetFermion()	//false if Dirac particle, true if Majorana
+{
+	return bFermion;
+}
+
+int Decay::LNV()
+{
+	return 2*GetFermion() + 1;
+}
+
+void Decay::SetHel(int H)
+{
+	iH = H;
+}
+
+int Decay::GetHel()	//false if Dirac particle, true if Majorana
+{
+	return iH;
 }

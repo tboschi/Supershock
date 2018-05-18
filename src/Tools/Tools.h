@@ -69,9 +69,7 @@ enum ChannelName
 //Kinematic functions
 namespace Kine
 {
-	double ShrockFactor(double M_Meson, double M_Lepton, double M_Sterile); 
-	double ShrockRho(double X, double Y);
-	double ShrockFM(double X, double Y);
+	double ShrockFactor(double M_Meson, double M_Lepton, double M_Sterile, int H = 0); 
 	double Lambda(double X, double Y, double Z);
 	double I1_f(double t, double X, double Y, double Z);	//To be integrated
 	double I1_xyz(double X, double Y, double Z);

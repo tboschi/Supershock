@@ -42,6 +42,8 @@ void ThreeBody::InitMap()
 	mapParent["nMUMU"] = _nMUMU;
 	mapParent["nEMU"] = _nEMU;
 	mapParent["nMUE"] = _nMUE;
+	mapParent["EPI"] = _EPI;
+	mapParent["MUPI"] = _MUPI;
 }
 
 void ThreeBody::InitConst()
@@ -65,8 +67,8 @@ void ThreeBody::InitConst()
 			}
 			if (!IsElectron && IsMuon) //nu_mu is the sterile
 			{
-				fA = M_Neutrino/M_Parent;
-				fC = M_Sterile/M_Parent;
+				fA = M_Sterile/M_Parent;
+				fC = M_Neutrino/M_Parent;
 			}
 
 			fB = M_Electron/M_Parent;
@@ -172,6 +174,20 @@ void ThreeBody::InitConst()
 
 			break;
 
+		case _EPI:	//e+ pi-
+			M_Parent = M_Sterile;
+			fA = M_Pion/M_Sterile;
+			fB = M_Electron/M_Sterile;
+
+			break;
+
+		case _MUPI:	//mu+ pi- 
+			M_Parent = M_Sterile;
+			fA = M_Pion/M_Sterile;
+			fB = M_Muon/M_Sterile;
+
+			break;
+
 		default:
 			M_Parent = 0.0;
 			fA = 0.0;
@@ -199,7 +215,10 @@ double ThreeBody::dGamma()	//differential decay width (dG/dEx)
 double ThreeBody::Gamma()	//fully integrated decay width (G)
 {
 	if (IsEnergyConserved())
+	{
+		std::cout << "gam " << M2IntXY() << "\t" << std::endl;
 		return M2IntXY() / (64.0 * Const::fPi3 * GetParentMass());
+	}
 	else return 0.0;
 }
 
@@ -318,7 +337,20 @@ double ThreeBody::M2IntXY()	//Unpolarised amplitude, integrated over Ex and Ey
 }
 
 //Unpolarised amplitudes here after
+double ThreeBody::dGammadT(double Theta, int H)
+{
+	double z = x()/(2*b());
+	double Spin = (1-b(2)) * b() * (z + sqrt(z*z - 1)*cos(Theta));
+	double Term;
+	if (H > 0)
+		Term = 1 - a(2) - b(2) - Spin;
+	else if (H < 0)
+		Term = b(2) * (b(2) - a(2) -1) + Spin;
+	return Const::fGF2 * Const::fDPion2 * Kine::Lambda(1, a(2), b(2)) / 
+		(8 * Const::fPi) * pow(GetParentMass(), 3) * Term;
+}
 
+//Polarised amplitudes here after
 double ThreeBody::M2_Z() //NC N to n l l, Z propagator
 {
 	double gV = -0.5 + 2 * Const::fSin2W;
@@ -369,8 +401,25 @@ double ThreeBody::M2_WZIntY() //Interference term between Z and W propagator
 
 double ThreeBody::M2Lept()	//Pure leptonic decays (like muon or tau) 	//W propagator
 {
-	return 16 * Const::fGF2 * GetUu()*GetUu() *
-	       	pow(GetParentMass(), 4) * x() * (1 + a(2) - b(2) - c(2) - x());
+	if (GetHel() == 0)
+		return 16 * Const::fGF2 * GetUu()*GetUu() *
+			pow(GetParentMass(), 4) * x() * (1 + a(2) - b(2) - c(2) - x());
+	else if (GetHel() < 0 && a() > 0)	//it is double because there is no spin average
+	{
+		double spin = 2*a(2) / ( x() - sqrt(x(2) - 4*a(2)) );
+		std::cout << "spin " << GetHel() << "\t" << x()-spin <<  std::endl;
+		return 32 * Const::fGF2 * GetUu()*GetUu() *
+			pow(GetParentMass(), 4) * (x() - spin) * (1 + a(2) - b(2) - c(2) - x());
+	}
+	else if (GetHel() > 0 && a() > 0)
+	{
+		double spin = 2*a(2) / ( x() - sqrt(x(2) - 4*a(2)) );
+		std::cout << "spin " << GetHel() << "\t" << spin <<  std::endl;
+		return 32 * Const::fGF2 * GetUu()*GetUu() *
+			pow(GetParentMass(), 4) * (spin) * (1 + a(2) - b(2) - c(2) - x());
+	}
+	else
+		return 0.0;
 }
 
 double ThreeBody::M2LeptIntY()	//Leptonic decay, integrated analytically over y
@@ -503,6 +552,24 @@ double ThreeBody::MaxGamma()
 	return fMax;
 }
 
+double ThreeBody::MaxGammaT(int H)
+{
+	if (IsChanged() && fMax < 0)
+	{
+		fMax = -1.0;
+
+		//Phasespace coordinates are already checked by ddGamma
+		//for (double ix = 0.0; ix <= 2.0; ix += 2.0/Kine::Loop)
+		for (double it = 0.0; it <= Const::fPi; it += (2.0*Const::fPi)/200)
+		{
+			double Gam = dGammadT(it, H);
+			if (fMax < Gam)
+			       fMax = Gam;	
+		}
+	}
+
+	return fMax;
+}
 //boundaries of phase space
 double ThreeBody::yLim(double &Min, double &Max)	//y integration limits
 {
@@ -774,4 +841,14 @@ bool ThreeBody::IsChanged()
 	U_t_prev = U_t;
 
 	return Ret;
+}
+
+void ThreeBody::SetHel(int H)
+{
+	iH = H;
+}
+
+int ThreeBody::GetHel()
+{
+	return iH;
 }

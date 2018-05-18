@@ -59,26 +59,26 @@ int main(int argc, char** argv)
 	//std::ostream &Out = (OutFile.is_open()) ? OutFile : std::cout;
 
 	FluxDriver * TheFlux = new FluxDriver(FluxConfig);
-	Detector * TheBox = new Detector(DetConfig);
+	//Detector * TheBox = new Detector(DetConfig);
 	
 	std::stringstream ssL;
 	double Mass;
-	for (double Mass = 0.150; Mass < 0.191; Mass += 0.010)
+	for (double Mass = 0.0; Mass < 0.191; Mass += 0.010)
 	{
 		ssL.str("");
 		ssL.clear();
-		ssL << BaseName << std::setfill('0') << std::setw(3) << Mass*1000;
+		ssL << BaseName << std::setfill('0') << std::setw(3) << Mass*1000 << ".dat";
 
 		std::cout << "m " << Mass << "\t in " << ssL.str() << std::endl;
 		TheFlux->MakeFlux(Mass);
-		TheFlux->SetBaseline(TheBox->GetElement("Baseline"));
+		TheFlux->SetBaseline(574);
 		TheFlux->SetPOT(1e20);
 
 		std::ofstream Out(ssL.str().c_str());
 
 		double EnStep = (TheFlux->GetRangeEnd() - TheFlux->GetRangeStart()) / TheFlux->GetBinNumber();
-		for (double E = TheFlux->GetRangeStart(); E < TheFlux->GetRangeEnd(); E += EnStep)
-			Out << E + EnStep/2.0 << "\t" << TheFlux->GetIntensity(E, 1, 0) << std::endl;
+		for (double E = TheFlux->GetRangeStart()+EnStep/2.0; E < TheFlux->GetRangeEnd(); E += EnStep)
+			Out << E << "\t" << TheFlux->GetIntensity(E+1e-6, 1, 0) << std::endl;
 
 		Out.close();
 	}

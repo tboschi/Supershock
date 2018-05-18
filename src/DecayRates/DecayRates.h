@@ -26,7 +26,7 @@
 class Decay
 {
 	public:
-		Decay(double MSterile = 0.0, double Ue = 0.0, double Um = 0.0, double Ut = 0.0);	//Decay rates calculator
+		Decay(double MSterile = 0.0, double Ue = 0.0, double Um = 0.0, double Ut = 0.0, int H = 0, bool Maj = false);	//Decay rates calculator
 
 		void MapInit();
 		//Decay width with A, B, and K the enhancement factors
@@ -104,10 +104,16 @@ class Decay
 		double GetUt();
 
 		void SetNvec(TLorentzVector &X);
-		void SetMass(double X);
+		void SetMass(double X, int H = 0);
 		void SetUe(double X);
 		void SetUm(double X);
 		void SetUt(double X);
+
+		void SetFermion(bool M);
+		void SetHel(int H);
+		bool GetFermion();
+		int GetHel();
+		int LNV();
 
 	private:
 		int PdgCode[3];
@@ -173,6 +179,9 @@ class Decay
 		TGenPhaseSpace *Event;
 		TLorentzVector *N_vec, *N_rest;
 		ThreeBody *TheSpace;
+
+		bool bFermion;
+		int iH;
 };
 
 #endif

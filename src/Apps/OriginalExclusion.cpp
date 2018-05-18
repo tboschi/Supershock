@@ -111,30 +111,31 @@ int main(int argc, char** argv)
 		Mass = pow(10.0, logMass);
 		std::cout << "Mass " << Mass << std::endl;
 		EvGen->SetMass(Mass);
-		if (!EvGen->IsAllowed())
-			continue;
-
-		EvGen->MakeFlux(1);
 
 		vSignal.clear();
 		vSignal.resize(Grid);	//number of Uus probing
 
-		double Start, End;
-		double EnStep = EvGen->GetRange(Start, End)/EvGen->GetBinNumber();
-		for (double Energy = Start; Energy < End; Energy += EnStep)
+		if (EvGen->IsAllowed())
 		{
-			unsigned int i = 0;
-			for (double logUu2 = -11.0; logUu2+1e-6 < 0.0; logUu2 += 11.0/Grid, ++i)	//increase Uu logarithmically
+			EvGen->MakeFlux(1);
+
+			double Start, End;
+			double EnStep = EvGen->GetRange(Start, End)/EvGen->GetBinNumber();
+			for (double Energy = Start; Energy < End; Energy += EnStep)
 			{
-				Uu = pow(10.0, 0.5*logUu2);
-				if (UeFlag)
-					EvGen->SetUe(Uu);
-				if (UmFlag)
-					EvGen->SetUm(Uu);
-				if (UtFlag)
-					EvGen->SetUt(Uu);
-	
-				vSignal.at(i) += EnStep * EvGen->DecayNumber(Energy, Efficiency);
+				unsigned int i = 0;
+				for (double logUu2 = -11.0; logUu2+1e-6 < 0.0; logUu2 += 11.0/Grid, ++i)	//increase Uu logarithmically
+				{
+					Uu = pow(10.0, 0.5*logUu2);
+					if (UeFlag)
+						EvGen->SetUe(Uu);
+					if (UmFlag)
+						EvGen->SetUm(Uu);
+					if (UtFlag)
+						EvGen->SetUt(Uu);
+		
+					vSignal.at(i) += EnStep * EvGen->DecayNumber(Energy, Efficiency);
+				}
 			}
 		}
 

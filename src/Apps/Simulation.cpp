@@ -31,6 +31,7 @@ int main(int argc, char** argv)
 		{"mass", 	required_argument,	0, 'm'},
 		{"ueratio", 	required_argument,	0, 'E'},
 		{"umratio", 	required_argument,	0, 'M'},
+		{"helicity", 	required_argument,	0, 'H'},
 		{"help", 	no_argument,		0, 'h'},
 		{0,	0, 	0,	0},
 	};
@@ -44,10 +45,11 @@ int main(int argc, char** argv)
 	unsigned int Nevent;
 	double Mass = 0.0;
 	double UeF = 0.0, UmF = 0.0;
+	int Hel = 0;
 
 	std::string Channel = "ALL";
 	
-	while((iarg = getopt_long(argc,argv, "s:d:f:m:n:c:o:E:M:h", longopts, &index)) != -1)	
+	while((iarg = getopt_long(argc,argv, "s:d:f:m:n:c:o:H:h", longopts, &index)) != -1)	
 	{
 		switch(iarg)
 		{
@@ -73,11 +75,8 @@ int main(int argc, char** argv)
 				OutFile = new TFile(optarg, "RECREATE");
 				//OutFile = new TFile(optarg, "RECREATE");
 				break;
-			case 'M':
-				UmF = strtod(optarg, NULL);
-				break;
-			case 'E':
-				UeF = strtod(optarg, NULL);
+			case 'H':
+				Hel = strtol(optarg, NULL, 10);
 				break;
 			case 'h':
 				Usage(argv[0]);
@@ -89,18 +88,21 @@ int main(int argc, char** argv)
 
 	//std::ostream &Out = (OutFile.is_open()) ? OutFile : std::cout;
 	
-	EventGenerator * EvGen = new EventGenerator(SMConfig, DetConfig, FluxConfig);
+	EventGenerator * EvGen_u = new EventGenerator(SMConfig, DetConfig, FluxConfig);
+	EventGenerator * EvGen_d = new EventGenerator(SMConfig, DetConfig, FluxConfig);
 
 	if (Mass)
-		EvGen->SetMass(Mass);
-	UeF *= 1e-5/sqrt(UeF*UeF + UmF*UmF);  //sum^2 is 1e-10
-	UmF *= 1e-5/sqrt(UeF*UeF + UmF*UmF);  
-	EvGen->SetUe(UeF);
-	EvGen->SetUe(UmF);
+	{
+		EvGen_u->SetMass(Mass, -1);
+		EvGen_d->SetMass(Mass,  1);
+	}
 
-	EvGen->SetChannel(Channel);
-	EvGen->MakeFlux(1);
-	EvGen->MakeSampler();
+	EvGen_u->SetChannel(Channel);
+	EvGen_u->MakeFlux(1, 1,  1);
+	double intup = EvGen_u->MakeSampler(1);
+	EvGen_d->SetChannel(Channel);
+	EvGen_d->MakeFlux(1, 1, -1);
+	double intdo = EvGen_d->MakeSampler(-1);
 
 	//TH2D *hDalitz = new TH2D("dalitz", "Dalitz", 200,i0,0.2, 200,0,0.2);
 	
@@ -124,9 +126,8 @@ int main(int argc, char** argv)
 
 	Data->Branch("ID", &ID, "iID/i");
 	Data->Branch("Real", &Real, "fReal/D");
-	Data->Branch("Delay", &Delay, "fDelay/D");
-
-	/*
+	//Data->Branch("Delay", &Delay, "fDelay/D");
+	
 	Data->Branch("E_A", &EnergyA, "fEnergyA/D");
 	Data->Branch("P_A", &MomentA, "fMomentA/D");
 	Data->Branch("T_A", &TransvA, "fTransvA/D");
@@ -153,38 +154,44 @@ int main(int argc, char** argv)
 	Data->Branch("The0", &Theta0, "fTheta0/D");
 	Data->Branch("Phi0", &Phi0, "fPhi0/D");
 	Data->Branch("M_0", &Mass0, "fMass0/D");
-	*/
 
 	unsigned int nBunch = 80;	//80 bunhces 
 	double tBunch = 20e-9;	//20ns between bunches
 	unsigned int iBunch = 0;
 	double Beta = 1.0;
-	double Lc = EvGen->GetDetectorPtr()->GetElement("Baseline")/Const::fC;
+	double Lc = EvGen_u->GetDetectorPtr()->GetElement("Baseline")/Const::fC;
 	while (ID < Nevent)
 	{
-		Real = EvGen->SampleEnergy(1);
+		EventGenerator *PG;
+		if (EvGen_u->Rndm() < intup/(intup+intdo))
+			PG = EvGen_u;
+		else 
+			PG = EvGen_d;
 
-		iBunch = Rand->Integer(nBunch);
-		if (Rand->Rndm() < 2.99)
-			Beta = sqrt(1 - Mass*Mass / Real/Real);
-		else
-			Beta = 1.0;
+		Real = PG->SampleEnergy(1);
+
+		//iBunch = Rand->Integer(nBunch);
+		//if (Rand->Rndm() < 2.99)
+		//	Beta = sqrt(1 - Mass*Mass / Real/Real);
+		//else
+		//	Beta = 1.0;
 
 		//Delay = Lc * (1.0/Beta - 1) + iBunch*tBunch;
-		Delay = Rand->Gaus(Lc * (1.0/Beta - 1) + iBunch*tBunch, 1e-9);
+		//Delay = Rand->Gaus(Lc * (1.0/Beta - 1) + iBunch*tBunch, 1e-9);
 
-		Data->Fill();
-		++ID;
+		//Data->Fill();
+		//++ID;
 
-		/*
-		if (EvGen->EventKinematics())
+		
+		std::cout << "Part " << ID << std::endl;
+		if (PG->EventKinematics())
 		{
-			EvGen->GeneratePosition();
-			Particle *ParticleA = EvGen->GetDecayProduct(0, 1);
-			Particle *ParticleB = EvGen->GetDecayProduct(1, 1);
+			PG->GeneratePosition();
+			Particle *ParticleA = PG->GetDecayProduct(0, 1);
+			Particle *ParticleB = PG->GetDecayProduct(1, 1);
 
 			if (ParticleA != 0 && ParticleA->Pdg() == 111)
-				EvGen->Pi0Decay(ParticleA, ParticleA, ParticleB);
+				PG->Pi0Decay(ParticleA, ParticleA, ParticleB);
 
 			if (ParticleA != 0 && ParticleB != 0)
 			{
@@ -238,7 +245,6 @@ int main(int argc, char** argv)
 				SaveMe = 0;
 			}
 		}
-			*/
 	}
 
 	OutFile->cd();

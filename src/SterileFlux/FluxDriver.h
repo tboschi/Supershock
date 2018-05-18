@@ -29,7 +29,7 @@ class FluxDriver
 		~FluxDriver();
 
 		void CloneCopy(TH1D*& T, TObject* X);
-		bool MakeFlux(double M_Sterile);
+		bool MakeFlux(double M_Sterile, int H = 0);
 		void MakeElecComponent(bool Neutrino, Flux &sxFlux, double M_Sterile);
 		void MakeMuonComponent(bool Neutrino, Flux &sxFlux, double M_Sterile);
 		void MakeTauComponent(bool Neutrino, Flux &sxFlux, double M_Sterile);
@@ -53,7 +53,10 @@ class FluxDriver
 		double GetUe();
 		double GetUm();
 		double GetUt();
+		void SetHel(int H);
+		int GetHel();
 
+		void Modify(double &xdir, double &ydir, double M_Sterile);
 		/*
 		TH1D* GetTotalMn();
 		TH1D* GetPionMn();
@@ -87,7 +90,7 @@ class FluxDriver
 
 		TFile *SourceFile;
 		TFile *KineFile;
-		bool Kine;
+		bool Kine, Mod;
 
 		//Get fluxes from file
 		Flux* fxNuElectron;
@@ -143,6 +146,9 @@ class FluxDriver
 		const double M_Kaon;
 		const double M_Kaon0;
 		const double M_Charm;
+
+		std::vector<double> vMdir, vXdir, vYdir;
+		int iH;
 };
 
 #endif

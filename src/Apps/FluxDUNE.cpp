@@ -87,12 +87,12 @@ int main(int argc, char** argv)
 	TH1D * hPion  = new TH1D("hpion",  "pion",   100, 0, 20);
 	TH1D * h2Pion = new TH1D("h2pion", "2 pion", 100, 0, 20);
 
-	TH1D * pTotal = new TH1D("ptotal", "total geo", 100, 0, 20);
-	TH1D * pCharm = new TH1D("pcharm", "charm geo", 100, 0, 20);
-	TH1D * pTauE  = new TH1D("ptaue",  "taue geo",  100, 0, 20);
-	TH1D * pTauM  = new TH1D("ptaum",  "taum geo",  100, 0, 20);
-	TH1D * pPion  = new TH1D("ppion",  "pion geo",  100, 0, 20);
-	TH1D * p2Pion = new TH1D("p2pion", "2pion geo", 100, 0, 20);
+	//TH1D * pTotal = new TH1D("ptotal", "total geo", 100, 0, 20);
+	//TH1D * pCharm = new TH1D("pcharm", "charm geo", 100, 0, 20);
+	//TH1D * pTauE  = new TH1D("ptaue",  "taue geo",  100, 0, 20);
+	//TH1D * pTauM  = new TH1D("ptaum",  "taum geo",  100, 0, 20);
+	//TH1D * pPion  = new TH1D("ppion",  "pion geo",  100, 0, 20);
+	//TH1D * p2Pion = new TH1D("p2pion", "2pion geo", 100, 0, 20);
 
 	double Th0 = atan2(5, 575);
 
@@ -118,11 +118,11 @@ int main(int argc, char** argv)
 	double sqrts = S.M();		//CM energy
 
 	double psint, pcost;
-	double massdecay0[2] = {mN, mt};
-	double massdecay1[3] = {mN, 0.0, mm};
-	double massdecay2[3] = {mN, 0.0, me};
-	double massdecay3[2] = {mN, mpi};
-	double massdecay4[3] = {mN, mpi, mpi0};
+	double massdecay0[2] = {0.0, mt};
+	double massdecay1[3] = {0.0, 0.0, mm};
+	double massdecay2[3] = {0.0, 0.0, me};
+	double massdecay3[2] = {0.0, mpi};
+	double massdecay4[3] = {0.0, mpi, mpi0};
 
 	TGenPhaseSpace event;
 	
@@ -150,13 +150,14 @@ int main(int argc, char** argv)
 			Ds_vec.Boost(S.BoostVector());
 
 			Decay0 = true;
-			event.SetDecay(Ds_vec, 2, massdecay0);
+			if (!event.SetDecay(Ds_vec, 2, massdecay0))
+				continue;
 			event.Generate();
 
 			TLorentzVector tau_vec = *(event.GetDecay(1));
 			TLorentzVector nut_vec = *(event.GetDecay(0));
 
-			pCharm->Fill(nut_vec.E());
+			//pCharm->Fill(nut_vec.E());
 			if (nut_vec.Theta() < Th0)
 				hCharm->Fill(nut_vec.E());
 
@@ -167,13 +168,14 @@ int main(int argc, char** argv)
 				TLorentzVector tau_cm(0, 0, 0, mt);
 				switch(nChannel)
 				{
-					Space->SetSterileMass(mN);
+					Space->SetSterileMass(0.0);
+					Space->TauChannel();
+					Space->SetUt(1.0);
 					case 1:		//tau -> nu_t nu_e e
 						Space->SetParent("TauE");
-						Space->TauChannel();
-						Space->SetUt(1.0);
 
-						event.SetDecay(tau_cm, 3, massdecay1);
+						if (!event.SetDecay(tau_cm, 3, massdecay1))
+							break;
 						Weight = 1.0;
 						while (Gen->Rndm() < Weight)	//works in CM only
 						{
@@ -186,17 +188,16 @@ int main(int argc, char** argv)
 						nut_vec = *(event.GetDecay(0));
 						nut_vec.Boost(tau_vec.BoostVector());
 		
-						pTauE->Fill(nut_vec.E());
+						//pTauE->Fill(nut_vec.E());
 						if (nut_vec.Theta() < Th0)
 							hTauE->Fill(nut_vec.E());
 						break;
 
 					case 2:		//tau -> nu_t nu_m mu
 						Space->SetParent("TauM");
-						Space->TauChannel();
-						Space->SetUt(1.0);
 		
-						event.SetDecay(tau_cm, 3, massdecay2);
+						if (!event.SetDecay(tau_cm, 3, massdecay2))
+							break;
 						Weight = 1.0;
 						while (Gen->Rndm() < Weight)	//works in CM only
 						{
@@ -209,29 +210,31 @@ int main(int argc, char** argv)
 						nut_vec = *(event.GetDecay(0));
 						nut_vec.Boost(tau_vec.BoostVector());
 		
-						pTauM->Fill(nut_vec.E());
+						//pTauM->Fill(nut_vec.E());
 						if (nut_vec.Theta() < Th0)
 							hTauM->Fill(nut_vec.E());
 						break;
 	
 					case 3:		//tau -> nu_t pion
-						event.SetDecay(tau_vec, 2, massdecay3);
+						if (!event.SetDecay(tau_vec, 2, massdecay3))
+							break;
 						event.Generate();
 
 						nut_vec = *(event.GetDecay(0));
 
-						pPion->Fill(nut_vec.E());
+						//pPion->Fill(nut_vec.E());
 						if (nut_vec.Theta() < Th0)
 							hPion->Fill(nut_vec.E());
 						break;
 
 					case 4:		//tau -> nu_t pi pi0
-						event.SetDecay(tau_vec, 3, massdecay3);
+						if (!event.SetDecay(tau_vec, 3, massdecay3))
+							break;
 						event.Generate();
 
 						nut_vec = *(event.GetDecay(0));
 
-						p2Pion->Fill(nut_vec.E());
+						//p2Pion->Fill(nut_vec.E());
 						if (nut_vec.Theta() < Th0)
 							h2Pion->Fill(nut_vec.E());
 						break;
@@ -243,8 +246,9 @@ int main(int argc, char** argv)
 			++nIter;
 		}
 	}
-	//		cc	pC	fDs	Br	Tot evts  
-	double SF = 12.1e-3 / 331.4 * 0.077 * 0.0548 / double(nMAX);
+	//		cc	pC	fDs	Br	Tot evts      baseline	   area
+	double SF = 12.1e-3 / 331.4 * 0.077 * 0.0548 / double(nMAX) * 575.0*575.0/(500.0*500.0);
+	//flux is nu/POT/GeV/cm2	@ 1m
 
 	hCharm->Scale(SF);
 	hTauE->Scale(SF * 0.1785);	//tau->e (17.85 %)
@@ -252,11 +256,11 @@ int main(int argc, char** argv)
 	hPion->Scale(SF * 0.1082);	//tau->pi (10.82 %)
 	h2Pion->Scale(SF * 0.2551);	//tau->2pi (25.62 %)	Phase space only!!
 
-	pCharm->Scale(SF);
-	pTauE->Scale(SF * 0.1785);
-	pTauM->Scale(SF * 0.1736);
-	pPion->Scale(SF * 0.1082);
-	p2Pion->Scale(SF * 0.2551);
+	//pCharm->Scale(SF);
+	//pTauE->Scale(SF * 0.1785);
+	//pTauM->Scale(SF * 0.1736);
+	//pPion->Scale(SF * 0.1082);
+	//p2Pion->Scale(SF * 0.2551);
 
 	hTotal->Add(hCharm);
 	hTotal->Add(hTauE);
@@ -264,11 +268,11 @@ int main(int argc, char** argv)
 	hTotal->Add(hPion);
 	hTotal->Add(h2Pion);
 
-	pTotal->Add(pCharm);
-	pTotal->Add(pTauE);
-	pTotal->Add(pTauM);
-	pTotal->Add(pPion);
-	pTotal->Add(p2Pion);
+	//pTotal->Add(pCharm);
+	//pTotal->Add(pTauE);
+	//pTotal->Add(pTauM);
+	//pTotal->Add(pPion);
+	//pTotal->Add(p2Pion);
 
 	hTotal->Write();
 	hCharm->Write();
@@ -277,12 +281,12 @@ int main(int argc, char** argv)
 	hPion->Write();
 	h2Pion->Write();
 
-	pTotal->Write();
-	pCharm->Write();
-	pTauE->Write();
-	pTauM->Write();
-	pPion->Write();
-	p2Pion->Write();
+	//pTotal->Write();
+	//pCharm->Write();
+	//pTauE->Write();
+	//pTauM->Write();
+	//pPion->Write();
+	//p2Pion->Write();
 
 	OutF->Close();
 	if (OutFile.is_open())

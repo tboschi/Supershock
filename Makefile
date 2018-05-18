@@ -22,19 +22,21 @@ NEW =	MegaExcl	\
 	Coupler		\
 	MakeFlux	\
 	FluxDUNE	\
+	FluxSterile	\
+	SpecialExclusion	\
+	Kine		\
+	OriginalExclusion	\
+	Simulation	\
+	Width		\
 	#MakeEfficiency	\
 	Rate		\
-	OriginalExclusion	\
 	DecayPlot	\
 	Plotter		\
 	FluxCharm	\
-	Kine		\
-	Width		\
 	#OpenCC		\
 	Rate		\
 	ExcluMix	\
 	Timing		\
-	Simulation	\
 	Probability	\
 	CrossExcl	\
 	EnergyBack	\

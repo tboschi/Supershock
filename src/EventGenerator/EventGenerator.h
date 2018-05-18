@@ -62,13 +62,13 @@ class EventGenerator
 		void GeneratePosition();
 
 		//Generate flux to be used as PDF
-		void MakeFlux(bool Mass, bool TotalPOT = true);
-		void MakeSampler();
+		void MakeFlux(bool Mass, bool TotalPOT = true, int H = 0);
+		double MakeSampler(int H = 0);
 		double SampleEnergy(bool Set = true);
 
-		double NeutIntensity(bool Mass);
-		double AntiIntensity(bool Mass);
-		double FluxIntensity(bool Mass);
+		double NeutIntensity(bool Mass, int H = 0);
+		double AntiIntensity(bool Mass, int H = 0);
+		double FluxIntensity(bool Mass, int H = 0);
 
 		double ScaleXSec(double IntP, double IntN);
 		double Variable(double dt);
@@ -90,7 +90,7 @@ class EventGenerator
 
 		//Set function
 		void SetChannel(std::string Ch = "R", bool Efficiency = false, char Couple = 'M');
-		void SetMass(double X);
+		void SetMass(double X, int H = 0);
 		void SetEnergy(double X);
 		void SetEnergyKin(double X);
 		void SetUe(double X, bool GvF = 0);
@@ -105,6 +105,8 @@ class EventGenerator
 		double SetLambda(double X);
 		void SetUserData(double X);
 		double GetUserData();
+
+		double Rndm();
 
 	private:
 		std::string sChannel;	//Channel is set globally in class
@@ -121,7 +123,7 @@ class EventGenerator
 
 		Decay *TheGamma;
 		Detector *TheBox;
-		FluxDriver *TheFlux;
+		FluxDriver *TheFlux_d, *TheFlux_u;
 		Nucleon *TheProton, *TheNeutron;
 		//Nucleon *TheProton_a, *TheNeutron_a;
 

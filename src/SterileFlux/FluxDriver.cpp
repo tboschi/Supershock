@@ -20,7 +20,9 @@ FluxDriver::FluxDriver(std::string FluxConfig) :
 	std::stringstream ssL;
 	std::string Line, Key, Name;
 	Kine = false;
+	Mod = false;
 	
+	std::ifstream ModFile;
 	std::ifstream ConfigFile(FluxConfig.c_str());
 	while (std::getline(ConfigFile, Line))
 	{
@@ -59,6 +61,12 @@ FluxDriver::FluxDriver(std::string FluxConfig) :
 				CloneCopy(hTauMTau,   KineFile->Get("taumtau"));
 
 				KineFile->Close();
+			}
+
+			if (Key.find("Modifier") != std::string::npos)
+			{
+				Mod = true;
+				ModFile.open(Name.c_str());
 			}
 		}
 	}
@@ -110,6 +118,23 @@ FluxDriver::FluxDriver(std::string FluxConfig) :
         hTauMTa  = new TH1D("htaumta",  "TauM flux",  BinNumber, RangeStart, RangeEnd);
 
 	M_Sterile_prev = -1.0;
+
+	if (ModFile.is_open())
+	{
+		double Mass, X, Y;
+		while (getline(ModFile, Line))
+		{
+			ssL.str("");
+			ssL.clear();
+			ssL << Line;
+
+			ssL >> Mass >> X >> Y;
+			vMdir.push_back(Mass);
+			vXdir.push_back(X);
+			vYdir.push_back(Y);
+		}
+		ModFile.close();
+	}
 }
 
 FluxDriver::~FluxDriver()
@@ -172,7 +197,7 @@ void FluxDriver::CloneCopy(TH1D*& T, TObject* X)
 		T = NULL;
 }
 
-bool FluxDriver::MakeFlux(double M_Sterile)
+bool FluxDriver::MakeFlux(double M_Sterile, int H)	//helicity
 {
 	if (IsChanged(M_Sterile))
 	{
@@ -220,6 +245,8 @@ bool FluxDriver::MakeFlux(double M_Sterile)
 
 		if (fxNuElectron)	//Model on nu electron flux
 		{
+			SetHel(H);
+
 			Flux sxFlux(*fxNuElectron);
 			MakeElecComponent(1, sxFlux, M_Sterile);
 
@@ -232,6 +259,8 @@ bool FluxDriver::MakeFlux(double M_Sterile)
 	
 		if (fxNuElectronBar)	//Model on nu electron bar flux
 		{
+			SetHel(-H);
+
 			Flux sxFlux(*fxNuElectronBar);
 			MakeElecComponent(0, sxFlux, M_Sterile);
 
@@ -244,6 +273,8 @@ bool FluxDriver::MakeFlux(double M_Sterile)
 
 		if (fxNuMuon)		//Model on nu mu flux
 		{
+			SetHel(H);
+
 			Flux sxFlux(*fxNuMuon);
 			MakeMuonComponent(1, sxFlux, M_Sterile);
 
@@ -256,6 +287,8 @@ bool FluxDriver::MakeFlux(double M_Sterile)
 	
 		if (fxNuMuonBar)	//Model on nu mu bar flux
 		{
+			SetHel(-H);
+
 			Flux sxFlux(*fxNuMuonBar);
 			MakeMuonComponent(0, sxFlux, M_Sterile);
 
@@ -302,7 +335,7 @@ void FluxDriver::MakeElecComponent(bool Neutrino, Flux &sxFlux, double M_Sterile
 	TH1D *hPoint;
 	if (hPoint = sxFlux.Get("Pion"))
 	{
-		hPoint->Scale(Kine::ShrockFactor(M_Pion, M_Electron, M_Sterile));
+		hPoint->Scale(Kine::ShrockFactor(M_Pion, M_Electron, M_Sterile, GetHel()));
 		if (Neutrino)
 			hPionEn->Add(hPoint);
 		else
@@ -312,7 +345,7 @@ void FluxDriver::MakeElecComponent(bool Neutrino, Flux &sxFlux, double M_Sterile
 	//K- -> pi0 e- nu_e_bar
 	if (hPoint = sxFlux.Get("Kaon"))
 	{
-		double KaonFactor = 1.582e-3/(1.582e-3+5.07) * Kine::ShrockFactor(M_Kaon, M_Electron, M_Sterile);	//Two body
+		double KaonFactor = 1.582e-3/(1.582e-3+5.07) * Kine::ShrockFactor(M_Kaon, M_Electron, M_Sterile, GetHel());	//Two body
 		if (Kine)
 		{
 			double KE = hKaonElec->GetBinContent(hKaonElec->FindBin(M_Sterile+1e-9)+1);	//1e-9 to prevent bin error
@@ -363,7 +396,7 @@ void FluxDriver::MakeElecComponent(bool Neutrino, Flux &sxFlux, double M_Sterile
 	//Ds -> e nu_e
 	if (hPoint = sxFlux.Get("Charm"))
 	{
-		hPoint->Scale(Kine::ShrockFactor(M_Charm, M_Electron, M_Sterile));
+		hPoint->Scale(Kine::ShrockFactor(M_Charm, M_Electron, M_Sterile, GetHel()));
 		if (Neutrino)
 			hCharmEn->Add(hPoint);
 		else 
@@ -377,7 +410,7 @@ void FluxDriver::MakeMuonComponent(bool Neutrino, Flux &sxFlux, double M_Sterile
 	TH1D *hPoint;
 	if (hPoint = sxFlux.Get("Pion"))
 	{	
-		hPoint->Scale(Kine::ShrockFactor(M_Pion, M_Muon, M_Sterile));
+		hPoint->Scale(Kine::ShrockFactor(M_Pion, M_Muon, M_Sterile, GetHel()));
 		if (Neutrino)
 			hPionMn->Add(hPoint);
 		else 
@@ -387,7 +420,7 @@ void FluxDriver::MakeMuonComponent(bool Neutrino, Flux &sxFlux, double M_Sterile
 	//K+ -> mu+ nu_mu	&&	pi0 mu+ nu_mu
 	if (hPoint = sxFlux.Get("Kaon"))
 	{
-		double KaonFactor = 63.56/(63.56+3.35) * Kine::ShrockFactor(M_Kaon, M_Muon, M_Sterile);	//Two body
+		double KaonFactor = 63.56/(63.56+3.35) * Kine::ShrockFactor(M_Kaon, M_Muon, M_Sterile, GetHel());	//Two body
 		if (Kine)
 		{
 			double KM = hKaonMuon->GetBinContent(hKaonMuon->FindBin(M_Sterile+1e-9)+1);	//1e-9 to prevent bin error
@@ -438,7 +471,7 @@ void FluxDriver::MakeMuonComponent(bool Neutrino, Flux &sxFlux, double M_Sterile
 	//Ds -> mu nu_mu
 	if (hPoint = sxFlux.Get("Charm"))
 	{
-		hPoint->Scale(Kine::ShrockFactor(M_Charm, M_Muon, M_Sterile));
+		hPoint->Scale(Kine::ShrockFactor(M_Charm, M_Muon, M_Sterile, GetHel()));
 		if (Neutrino)
 			hCharmMn->Add(hPoint);
 		else 
@@ -452,21 +485,44 @@ void FluxDriver::MakeTauComponent(bool Neutrino, Flux &sxFlux, double M_Sterile)
 	TH1D *hPoint;
 	if (hPoint = sxFlux.Get("Charm"))
 	{
-		hPoint->Scale(Kine::ShrockFactor(M_Charm, M_Tau, M_Sterile));
+		hPoint->Scale(Kine::ShrockFactor(M_Charm, M_Tau, M_Sterile, GetHel()));
+
+		//modifier from empirical observation
+		if (Mod && M_Sterile < M_Charm - M_Tau)
+		{
+			TH1D *hTemp = dynamic_cast<TH1D*> (hPoint->Clone());
+			//TH1D *hTemp2 = dynamic_cast<TH1D*> (hCharmTn->Clone());
+			hPoint->Reset("ICES");
+
+			double xdir, ydir;
+			Modify(xdir ,ydir, M_Sterile);
+			double EnStep = (RangeEnd-RangeStart)/5000.0;
+			for (double Energy = RangeStart; Energy < RangeEnd; Energy += EnStep)
+			{
+				double Flux = hTemp->GetBinContent(hTemp->FindBin(Energy));
+				hPoint->Fill(Energy*xdir, Flux*BinNumber/5000.0);	//fix end point
+			}
+
+			hPoint->Scale(xdir);		//fix peak
+			hPoint->Scale(ydir);		//fix peak
+			hTemp->Delete();
+		}
+
+		//hTemp->change_ydir
 		if (Neutrino)
 			hCharmTn->Add(hPoint);
 		else 
 			hCharmTa->Add(hPoint);
 	}
 
-	//tau -> pi tau
+	//tau -> pi tau			this doesnot suffer from helicity suppr, just phase space, maybe a fact of 2
 	if (hPoint = sxFlux.Get("Pion"))
 	{
-		hPoint->Scale(Kine::ShrockFactor(M_Tau, M_Pion, M_Sterile));
+		hPoint->Scale(Kine::ShrockFactor(M_Tau, M_Pion, M_Sterile, GetHel()));
 		if (Neutrino)
-			hCharmTn->Add(hPoint);
+			hPionTn->Add(hPoint);
 		else 
-			hCharmTa->Add(hPoint);
+			hPionTa->Add(hPoint);
 	}
 
 	//tau -> pi pi0 nu_tau
@@ -578,7 +634,7 @@ double FluxDriver::GetIntensity(double Energy, bool NvA, bool Uu)	//Return flux 
 	Bin = hTotElec->FindBin(Energy);
 	I1 = hTotElec->GetBinContent(Bin);
 	E1 = hTotElec->GetBinCenter(Bin);
-	if (Energy < hTotElec->GetBinCenter(Bin))
+	if (Energy < E1)
 	{
 		I2 = hTotElec->GetBinContent(Bin-1);
 		E2 = hTotElec->GetBinCenter(Bin-1);
@@ -594,7 +650,7 @@ double FluxDriver::GetIntensity(double Energy, bool NvA, bool Uu)	//Return flux 
 	Bin = hTotMuon->FindBin(Energy);
 	I1 = hTotMuon->GetBinContent(Bin);
 	E1 = hTotMuon->GetBinCenter(Bin);
-	if (Energy < hTotMuon->GetBinCenter(Bin))
+	if (Energy < E1)
 	{
 		I2 = hTotMuon->GetBinContent(Bin-1);
 		E2 = hTotMuon->GetBinCenter(Bin-1);
@@ -610,7 +666,7 @@ double FluxDriver::GetIntensity(double Energy, bool NvA, bool Uu)	//Return flux 
 	Bin = hTotTau->FindBin(Energy);
 	I1 = hTotTau->GetBinContent(Bin);
 	E1 = hTotTau->GetBinCenter(Bin);
-	if (Energy < hTotTau->GetBinCenter(Bin))
+	if (Energy < E1)
 	{
 		I2 = hTotTau->GetBinContent(Bin-1);
 		E2 = hTotTau->GetBinCenter(Bin-1);
@@ -798,4 +854,27 @@ double FluxDriver::GetUm()
 double FluxDriver::GetUt()
 {
 	return U_t;
+}
+
+void FluxDriver::Modify(double &xdir, double &ydir, double M_Sterile)
+{
+	for (unsigned int i = 0; i < vMdir.size(); ++i)
+	{
+		if (vMdir.at(i) > M_Sterile || fabs(M_Sterile-vMdir.at(i)) < 1e-9)
+		{
+			xdir = vXdir.at(i);
+			ydir = vYdir.at(i);
+			break;
+		}
+	}
+}
+
+void FluxDriver::SetHel(int H)
+{
+	iH = H;
+}
+
+int FluxDriver::GetHel()
+{
+	return iH;
 }

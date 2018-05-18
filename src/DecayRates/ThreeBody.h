@@ -51,6 +51,11 @@ class ThreeBody
 		double M2nMUE();
 		double MaxGamma();
 
+		double dGammadT(double Theta, int H);
+		double MaxGammaT(int H);
+		void SetHel(int H);
+		int GetHel();
+
 		double yLim(double &Min, double &Max);
 		double xLim(double &Min, double &Max);
 		double Integrate(double (ThreeBody::*FF)(), double A, double B);
@@ -124,6 +129,7 @@ class ThreeBody
 		std::string sParent;
 
 		bool IsElectron, IsMuon, IsTau;
+		int iH;
 };
 
 #endif

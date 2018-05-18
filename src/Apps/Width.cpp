@@ -95,8 +95,10 @@ int main(int argc, char** argv)
 
 	int bins = 2000;
 
-	TH1D *hMuonElec  = new TH1D("muonelec",  "Muon->Elec",  bins,0,2.0);
-	TH1D *hMuonMuon  = new TH1D("muonmuon",  "Muon->Muon",  bins,0,2.0);
+	TH1D *hMuonElecu  = new TH1D("muonelecu",  "Muon->Elec up",  bins,0,2.0);
+	TH1D *hMuonMuonu  = new TH1D("muonmuonu",  "Muon->Muon up",  bins,0,2.0);
+	TH1D *hMuonElecd  = new TH1D("muonelecd",  "Muon->Elec down",  bins,0,2.0);
+	TH1D *hMuonMuond  = new TH1D("muonmuond",  "Muon->Muon down",  bins,0,2.0);
 	TH1D *hKaonElec  = new TH1D("kaonelec",  "Kaon->Elec",  bins,0,2.0);
 	TH1D *hKaonMuon  = new TH1D("kaonmuon",  "Kaon->Muon",  bins,0,2.0);
 	TH1D *hKaon0Elec = new TH1D("kaon0elec", "Kaon0->Elec", bins,0,2.0);
@@ -114,8 +116,10 @@ int main(int argc, char** argv)
 	ThreeBody *DecayTauM  = new ThreeBody("TauM",  0.0, 1.0, 1.0, 1.0);
 
 	DecayMuon->ElectronChannel();
+	DecayMuon->SetHel(0);
 	double gME = DecayMuon->Gamma();
 	DecayMuon->MuonChannel();
+	DecayMuon->SetHel(0);
 	double gMM = DecayMuon->Gamma();
 
 	DecayKaon->ElectronChannel();
@@ -138,6 +142,8 @@ int main(int argc, char** argv)
 	DecayTauM->TauChannel();
 	double gTMT = DecayTauM->Gamma();
 
+	std::cout << gME << "\t" << gMM << std::endl;
+
 	for (double MS = 0.0; MS <= 2.0; MS += 0.001)
 	{
 		DecayMuon->SetSterileMass(MS);
@@ -146,14 +152,27 @@ int main(int argc, char** argv)
 		DecayTauE->SetSterileMass(MS);
 		DecayTauM->SetSterileMass(MS);
 
+
 		Out << MS << "\t";
 
+
 		DecayMuon->ElectronChannel();
-		hMuonElec->Fill(MS, DecayMuon->Gamma()/gME);
-		Out << DecayMuon->Gamma()/gME << "\t";
+		DecayMuon->SetHel(1);
+		hMuonElecu->Fill(MS, DecayMuon->Gamma()/gME);
+		Out << DecayMuon->Gamma()/2/gME << "\t";
 		DecayMuon->MuonChannel();
-		hMuonMuon->Fill(MS, DecayMuon->Gamma()/gMM);
-		Out << DecayMuon->Gamma()/gMM << "\t";
+		DecayMuon->SetHel(1);
+		hMuonMuonu->Fill(MS, DecayMuon->Gamma()/gMM);
+		Out << DecayMuon->Gamma()/2/gMM << "\t";
+
+		DecayMuon->ElectronChannel();
+		DecayMuon->SetHel(-1);
+		hMuonElecd->Fill(MS, DecayMuon->Gamma()/gME);
+		Out << DecayMuon->Gamma()/2/gME << "\t";
+		DecayMuon->MuonChannel();
+		DecayMuon->SetHel(-1);
+		hMuonMuond->Fill(MS, DecayMuon->Gamma()/gMM);
+		Out << DecayMuon->Gamma()/2/gMM << "\t";
 
 		DecayKaon->ElectronChannel();
 		hKaonElec->Fill(MS, DecayKaon->Gamma()/gKE);
@@ -186,8 +205,10 @@ int main(int argc, char** argv)
 		Out << std::endl;
 	}
 
-        hMuonElec->Write();
-	hMuonMuon->Write();
+        hMuonElecu->Write();
+	hMuonMuonu->Write();
+        hMuonElecd->Write();
+	hMuonMuond->Write();
         hKaonElec->Write();
         hKaonMuon->Write();
         hKaon0Elec->Write();

@@ -1,10 +1,11 @@
 #!/bin/bash
 
-cd /mt/home/tboschi/Templates/MCflux/Supershock
+cd /mt/home/tboschi/scratch/Supershock
 
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.250 -M -c MUPI -o Simulation/LAr/sign_LAr_MUPI_250_M.root -n 10000
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.300 -M -c MUPI -o Simulation/LAr/sign_LAr_MUPI_300_M.root -n 10000
-#./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.350 -M -c MUPI -o Simulation/LAr/sign_LAr_MUPI_350_M.root -n 10000
+./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.350 -M -c MUPI -o testfold/LAr_MUPI_350_down.root -n 10000 -H -1
+./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.350 -M -c MUPI -o testfold/LAr_MUPI_350_up.root   -n 10000 -H  1
 
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.250 -M -c nMUMU -o Simulation/LAr/sign_LAr_nMUMU_250_M.root -n 10000
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.300 -M -c nMUMU -o Simulation/LAr/sign_LAr_nMUMU_300_M.root -n 10000
@@ -43,7 +44,8 @@ cd /mt/home/tboschi/Templates/MCflux/Supershock
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.200 -E -c EPI -o Simulation/LAr/sign_LAr_EPI_200_E.root -n 10000
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.250 -E -c EPI -o Simulation/LAr/sign_LAr_EPI_250_E.root -n 10000
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.300 -E -c EPI -o Simulation/LAr/sign_LAr_EPI_300_E.root -n 10000
-#./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.350 -E -c EPI -o Simulation/LAr/sign_LAr_EPI_350_E.root -n 10000
+./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.350 -E -c EPI -o testfold/LAr_EPI_350_E_down.root -n 10000 -H -1
+./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.350 -E -c EPI -o testfold/LAr_EPI_350_E_up.root   -n 10000 -H  1
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.400 -E -c EPI -o Simulation/LAr/sign_LAr_EPI_400_E.root -n 10000
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.450 -E -c EPI -o Simulation/LAr/sign_LAr_EPI_450_E.root -n 10000
 
@@ -58,8 +60,8 @@ cd /mt/home/tboschi/Templates/MCflux/Supershock
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.250 -E -c nEMU -o Simulation/LAr/sign_LAr_nMUE_250_E.root -n 10000
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.300 -E -c nEMU -o Simulation/LAr/sign_LAr_nMUE_300_E.root -n 10000
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.350 -E -c nEMU -o Simulation/LAr/sign_LAr_nMUE_350_E.root -n 10000
-./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.400 -E -c nEMU -o Simulation/LAr/sign_LAr_nMUE_400_E.root -n 10000
-./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.450 -E -c nEMU -o Simulation/LAr/sign_LAr_nMUE_450_E.root -n 10000
+#./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.400 -E -c nEMU -o Simulation/LAr/sign_LAr_nMUE_400_E.root -n 10000
+#./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.450 -E -c nEMU -o Simulation/LAr/sign_LAr_nMUE_450_E.root -n 10000
 
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.050 -E -c nEE -o Simulation/LAr/sign_LAr_nEE_050_E.root -n 10000
 #./bin/Simulation -s config/SMConfig -f config/FluxConfig -d config/ND_LAr -m 0.100 -E -c nEE -o Simulation/LAr/sign_LAr_nEE_100_E.root -n 10000
